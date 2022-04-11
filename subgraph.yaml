@@ -30,5 +30,17 @@ dataSources:
         - name: ERC20
           file: ./abis/erc20.json
       eventHandlers:
-       - event: Mint(address,uint256,uint256)
-         handler: handleMint
+        - event: Borrow(address,uint256,uint256,uint256)
+          handler: handleBorrow
+        - event: RepayBorrow(address,address,uint256,uint256,uint256)
+          handler: handleRepayBorrow
+        - event: LiquidateBorrow(address,address,uint256,address,uint256)
+          handler: handleLiquidateBorrow
+        - event: AccrueInterest(uint256,uint256,uint256)
+          handler: handleAccrueInterest
+        - event: NewReserveFactor(uint256,uint256)
+          handler: handleNewReserveFactor
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: NewMarketInterestRateModel(address,address)
+          handler: handleNewMarketInterestRateModel
