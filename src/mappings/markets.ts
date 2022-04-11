@@ -20,7 +20,7 @@ import {
 
 let cUSDCAddress = '0x4a92e71227d294f041bd82dd8f78591b75140d63'
 let cETHAddress = '0x41b5844f4680a8c38fbb695b7f9cfd1f64474a72'
-let daiAddress = '0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa'
+let daiAddress = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa'
 
 // Used for all cERC20 contracts
 function getTokenPrice(
