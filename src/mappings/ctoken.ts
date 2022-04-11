@@ -9,7 +9,7 @@ import {
   AccrueInterest,
   NewReserveFactor,
   NewMarketInterestRateModel,
-} from '../types/cREP/CToken'
+} from '../types/cDAI/CToken'
 import { AccountCToken, Market, Account } from '../types/schema'
 
 import { createMarket, updateMarket } from './markets'
@@ -69,6 +69,7 @@ export function handleRedeem(event: Redeem): void {
  */
 export function handleBorrow(event: Borrow): void {
   let market = Market.load(event.address.toHexString())
+  if  (!market) return;
   let accountID = event.params.borrower.toHex()
 
   // Update cTokenStats common for all events, and return the stats to update unique
@@ -130,6 +131,7 @@ export function handleBorrow(event: Borrow): void {
  */
 export function handleRepayBorrow(event: RepayBorrow): void {
   let market = Market.load(event.address.toHexString())
+  if (!market) return;
   let accountID = event.params.borrower.toHex()
 
   // Update cTokenStats common for all events, and return the stats to update unique
@@ -223,6 +225,7 @@ export function handleTransfer(event: Transfer): void {
   // with normal transfers, since mint, redeem, and seize transfers will already run updateMarket()
   let marketID = event.address.toHexString()
   let market = Market.load(marketID)
+  if (!market) return;
   if (market.accrualBlockNumber != event.block.number.toI32()) {
     market = updateMarket(
       event.address,
@@ -314,8 +317,8 @@ export function handleTransfer(event: Transfer): void {
       previousCTokenBalanceTo.equals(zeroBD) &&
       !event.params.amount.toBigDecimal().equals(zeroBD) // checking edge case for transfers of 0
     ) {
-      market.numberOfSuppliers = market.numberOfSuppliers + 1
-      market.save()
+        market.numberOfSuppliers = market.numberOfSuppliers + 1
+        market.save()
     }
   }
 }
@@ -327,8 +330,10 @@ export function handleAccrueInterest(event: AccrueInterest): void {
 export function handleNewReserveFactor(event: NewReserveFactor): void {
   let marketID = event.address.toHex()
   let market = Market.load(marketID)
-  market.reserveFactor = event.params.newReserveFactorMantissa
-  market.save()
+  if (market) {
+    market.reserveFactor = event.params.newReserveFactorMantissa
+    market.save()
+  }
 }
 
 export function handleNewMarketInterestRateModel(

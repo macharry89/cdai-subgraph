@@ -2,33 +2,33 @@ specVersion: 0.0.2
 description: cDAI supply/borrow ecosystem for testnet(ropsten/kovan).
 repository: https://github.com/macharry89/cdai-subgraph
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: cDAI
-    network: kovan
+    network: ropsten
     source:
-      address: "0xF0d0EB522cfa50B716B3b1604C4F0fA6f04376AD"
+      address: "0xbc689667c13fb2a04f09272753760e38a95b998c"
       abi: CToken
-      startBlock: 18751182
+      startBlock: 9728839
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
       language: wasm/assemblyscript
-      file: ./src/mappings/ctoken.ts
+      file: cDAI\cDAI.wasm
       entities:
         - User
         - Market
         - CTokenInfo
       abis:
         - name: CToken
-          file: ./abis/ctoken.json
+          file: cDAI\abis\ctoken.json
         - name: PriceOracle
-          file: ./abis/priceOracle.json
+          file: cDAI\abis\priceOracle.json
         - name: PriceOracle2
-          file: ./abis/priceOracle2.json
+          file: cDAI\abis\priceOracle2.json
         - name: ERC20
-          file: ./abis/erc20.json
+          file: cDAI\abis\erc20.json
       eventHandlers:
         - event: Borrow(address,uint256,uint256,uint256)
           handler: handleBorrow

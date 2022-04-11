@@ -4,11 +4,11 @@
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts/index'
 import { Market, Comptroller } from '../types/schema'
 // PriceOracle is valid from Comptroller deployment until block 8498421
-import { PriceOracle } from '../types/cREP/PriceOracle'
+import { PriceOracle } from '../types/cDAI/PriceOracle'
 // PriceOracle2 is valid from 8498422 until present block (until another proxy upgrade)
-import { PriceOracle2 } from '../types/cREP/PriceOracle2'
-import { ERC20 } from '../types/cREP/ERC20'
-import { CToken } from '../types/cREP/CToken'
+import { PriceOracle2 } from '../types/cDAI/PriceOracle2'
+import { ERC20 } from '../types/cDAI/ERC20'
+import { CToken } from '../types/cDAI/CToken'
 
 import {
   exponentToBigDecimal,
@@ -18,9 +18,9 @@ import {
   zeroBD,
 } from './helpers'
 
-let cUSDCAddress = '0x39aa39c021dfbae8fac545936693ac917d5e7563'
-let cETHAddress = '0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5'
-let daiAddress = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'
+let cUSDCAddress = '0x4a92e71227d294f041bd82dd8f78591b75140d63'
+let cETHAddress = '0x41b5844f4680a8c38fbb695b7f9cfd1f64474a72'
+let daiAddress = '0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa'
 
 // Used for all cERC20 contracts
 function getTokenPrice(
@@ -30,76 +30,35 @@ function getTokenPrice(
   underlyingDecimals: i32,
 ): BigDecimal {
   let comptroller = Comptroller.load('1')
+  if (!comptroller) return BigDecimal.fromString('0')
   let oracleAddress = comptroller.priceOracle as Address
   let underlyingPrice: BigDecimal
-  let priceOracle1Address = Address.fromString('02557a5e05defeffd4cae6d83ea3d173b272c904')
 
-  /* PriceOracle2 is used at the block the Comptroller starts using it.
-   * see here https://etherscan.io/address/0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b#events
-   * Search for event topic 0xd52b2b9b7e9ee655fcb95d2e5b9e0c9f69e7ef2b8e9d2d0ea78402d576d22e22,
-   * and see block 7715908.
-   *
-   * This must use the cToken address.
-   *
-   * Note this returns the value without factoring in token decimals and wei, so we must divide
-   * the number by (ethDecimals - tokenDecimals) and again by the mantissa.
-   * USDC would be 10 ^ ((18 - 6) + 18) = 10 ^ 30
-   *
-   * Note that they deployed 3 different PriceOracles at the beginning of the Comptroller,
-   * and that they handle the decimals different, which can break the subgraph. So we actually
-   * defer to Oracle 1 before block 7715908, which works,
-   * until this one is deployed, which was used for 121 days */
-  if (blockNumber > 7715908) {
-    let mantissaDecimalFactor = 18 - underlyingDecimals + 18
-    let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
-    let oracle2 = PriceOracle2.bind(oracleAddress)
-    underlyingPrice = oracle2
-      .getUnderlyingPrice(eventAddress)
-      .toBigDecimal()
-      .div(bdFactor)
+  let mantissaDecimalFactor = 18 - underlyingDecimals + 18
+  let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
+  let oracle2 = PriceOracle2.bind(oracleAddress)
+  underlyingPrice = oracle2
+    .getUnderlyingPrice(eventAddress)
+    .toBigDecimal()
+    .div(bdFactor)
 
-    /* PriceOracle(1) is used (only for the first ~100 blocks of Comptroller. Annoying but we must
-     * handle this. We use it for more than 100 blocks, see reason at top of if statement
-     * of PriceOracle2.
-     *
-     * This must use the token address, not the cToken address.
-     *
-     * Note this returns the value already factoring in token decimals and wei, therefore
-     * we only need to divide by the mantissa, 10^18 */
-  } else {
-    let oracle1 = PriceOracle.bind(priceOracle1Address)
-    underlyingPrice = oracle1
-      .getPrice(underlyingAddress)
-      .toBigDecimal()
-      .div(mantissaFactorBD)
-  }
   return underlyingPrice
 }
 
 // Returns the price of USDC in eth. i.e. 0.005 would mean ETH is $200
 function getUSDCpriceETH(blockNumber: i32): BigDecimal {
   let comptroller = Comptroller.load('1')
+  if (!comptroller) return BigDecimal.fromString('0')
   let oracleAddress = comptroller.priceOracle as Address
-  let priceOracle1Address = Address.fromString('02557a5e05defeffd4cae6d83ea3d173b272c904')
-  let USDCAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 '
   let usdPrice: BigDecimal
 
-  // See notes on block number if statement in getTokenPrices()
-  if (blockNumber > 7715908) {
-    let oracle2 = PriceOracle2.bind(oracleAddress)
-    let mantissaDecimalFactorUSDC = 18 - 6 + 18
-    let bdFactorUSDC = exponentToBigDecimal(mantissaDecimalFactorUSDC)
-    usdPrice = oracle2
-      .getUnderlyingPrice(Address.fromString(cUSDCAddress))
-      .toBigDecimal()
-      .div(bdFactorUSDC)
-  } else {
-    let oracle1 = PriceOracle.bind(priceOracle1Address)
-    usdPrice = oracle1
-      .getPrice(Address.fromString(USDCAddress))
-      .toBigDecimal()
-      .div(mantissaFactorBD)
-  }
+  let oracle2 = PriceOracle2.bind(oracleAddress)
+  let mantissaDecimalFactorUSDC = 18 - 6 + 18
+  let bdFactorUSDC = exponentToBigDecimal(mantissaDecimalFactorUSDC)
+  usdPrice = oracle2
+    .getUnderlyingPrice(Address.fromString(cUSDCAddress))
+    .toBigDecimal()
+    .div(bdFactorUSDC)
   return usdPrice
 }
 
