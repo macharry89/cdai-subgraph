@@ -72,6 +72,8 @@ export function handleBorrow(event: Borrow): void {
   if  (!market) return;
   let accountID = event.params.borrower.toHex()
 
+  let underlyingDecimals = market.underlyingDecimals || 18;
+
   // Update cTokenStats common for all events, and return the stats to update unique
   // values for each event
   let cTokenStats = updateCommonCTokenStats(
@@ -85,13 +87,13 @@ export function handleBorrow(event: Borrow): void {
 
   let borrowAmountBD = event.params.borrowAmount
     .toBigDecimal()
-    .div(exponentToBigDecimal(market.underlyingDecimals))
+    .div(exponentToBigDecimal(underlyingDecimals))
   let previousBorrow = cTokenStats.storedBorrowBalance
 
   cTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
-    .div(exponentToBigDecimal(market.underlyingDecimals))
-    .truncate(market.underlyingDecimals)
+    .div(exponentToBigDecimal(underlyingDecimals))
+    .truncate(underlyingDecimals)
 
   cTokenStats.accountBorrowIndex = market.borrowIndex
   cTokenStats.totalUnderlyingBorrowed = cTokenStats.totalUnderlyingBorrowed.plus(
@@ -133,6 +135,7 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   let market = Market.load(event.address.toHexString())
   if (!market) return;
   let accountID = event.params.borrower.toHex()
+  let underlyingDecimals = market.underlyingDecimals || 18;
 
   // Update cTokenStats common for all events, and return the stats to update unique
   // values for each event
@@ -147,12 +150,12 @@ export function handleRepayBorrow(event: RepayBorrow): void {
 
   let repayAmountBD = event.params.repayAmount
     .toBigDecimal()
-    .div(exponentToBigDecimal(market.underlyingDecimals))
+    .div(exponentToBigDecimal(underlyingDecimals))
 
   cTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
-    .div(exponentToBigDecimal(market.underlyingDecimals))
-    .truncate(market.underlyingDecimals)
+    .div(exponentToBigDecimal(underlyingDecimals))
+    .truncate(underlyingDecimals)
 
   cTokenStats.accountBorrowIndex = market.borrowIndex
   cTokenStats.totalUnderlyingRepaid = cTokenStats.totalUnderlyingRepaid.plus(

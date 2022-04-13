@@ -82,7 +82,7 @@ export function createMarket(marketAddress: string): Market {
     market = new Market(marketAddress)
     market.underlyingAddress = contract.underlying()
     let underlyingContract = ERC20.bind(market.underlyingAddress as Address)
-    market.underlyingDecimals = underlyingContract.decimals()
+    market.underlyingDecimals = underlyingContract.decimals() || 18;
     if (market.underlyingAddress.toHexString() != daiAddress) {
       market.underlyingName = underlyingContract.name()
       market.underlyingSymbol = underlyingContract.symbol()
@@ -138,24 +138,28 @@ export function updateMarket(
     let contract = CToken.bind(contractAddress)
     let usdPriceInEth = getUSDCpriceETH(blockNumber)
 
-    // if cETH, we only update USD price
-    if (market.id == cETHAddress) {
-      market.underlyingPriceUSD = market.underlyingPrice
-        .div(usdPriceInEth)
-        .truncate(market.underlyingDecimals)
+    if (usdPriceInEth == BigDecimal.fromString('0')) {
+      market.underlyingPriceUSD = BigDecimal.fromString('0')
     } else {
-      let tokenPriceEth = getTokenPrice(
-        blockNumber,
-        contractAddress,
-        market.underlyingAddress as Address,
-        market.underlyingDecimals,
-      )
-      market.underlyingPrice = tokenPriceEth.truncate(market.underlyingDecimals)
-      // if USDC, we only update ETH price
-      if (market.id != cUSDCAddress) {
+      // if cETH, we only update USD price
+      if (market.id == cETHAddress) {
         market.underlyingPriceUSD = market.underlyingPrice
           .div(usdPriceInEth)
           .truncate(market.underlyingDecimals)
+      } else {
+        let tokenPriceEth = getTokenPrice(
+          blockNumber,
+          contractAddress,
+          market.underlyingAddress as Address,
+          market.underlyingDecimals,
+        )
+        market.underlyingPrice = tokenPriceEth.truncate(market.underlyingDecimals)
+        // if USDC, we only update ETH price
+        if (market.id != cUSDCAddress) {
+          market.underlyingPriceUSD = market.underlyingPrice
+            .div(usdPriceInEth)
+            .truncate(market.underlyingDecimals)
+        }
       }
     }
 
@@ -176,10 +180,13 @@ export function updateMarket(
         - Must multiply by ctokenDecimals, 10^8
         - Must div by mantissa, 10^18
      */
+
+    let underlyingDecimals = market.underlyingDecimals || 18
+
     market.exchangeRate = contract
       .exchangeRateStored()
       .toBigDecimal()
-      .div(exponentToBigDecimal(market.underlyingDecimals))
+      .div(exponentToBigDecimal(underlyingDecimals))
       .times(cTokenDecimalsBD)
       .div(mantissaFactorBD)
       .truncate(mantissaFactor)
@@ -192,18 +199,18 @@ export function updateMarket(
     market.reserves = contract
       .totalReserves()
       .toBigDecimal()
-      .div(exponentToBigDecimal(market.underlyingDecimals))
-      .truncate(market.underlyingDecimals)
+      .div(exponentToBigDecimal(underlyingDecimals))
+      .truncate(underlyingDecimals)
     market.totalBorrows = contract
       .totalBorrows()
       .toBigDecimal()
-      .div(exponentToBigDecimal(market.underlyingDecimals))
-      .truncate(market.underlyingDecimals)
+      .div(exponentToBigDecimal(underlyingDecimals))
+      .truncate(underlyingDecimals)
     market.cash = contract
       .getCash()
       .toBigDecimal()
-      .div(exponentToBigDecimal(market.underlyingDecimals))
-      .truncate(market.underlyingDecimals)
+      .div(exponentToBigDecimal(underlyingDecimals))
+      .truncate(underlyingDecimals)
 
     // Must convert to BigDecimal, and remove 10^18 that is used for Exp in Compound Solidity
     market.supplyRate = contract

@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "codegen": "graph codegen --output-dir src/types/",
     "prettier": "./node_modules/.bin/prettier —-write **/*.ts",
-    "deploy": "graph deploy --product --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ macharry89/cdai-exchange --access-token d5adde710ac546bb985f070aa3532566"
+    "deploy": "graph deploy --product --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ macharry89/cdai-kovan-subgraph --access-token d5adde710ac546bb985f070aa3532566",
+    "build": "graph build"
   },
   "repository": {
     "type": "git",
@@ -25,14 +26,9 @@
       "pre-commit": "lint-staged"
     }
   },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,css,md}": [
-      "prettier --write --config ./.prettierrc",
-      "git add"
-    ]
-  },
   "devDependencies": {
-    "@graphprotocol/graph-ts": "0.27.0-alpha.0",
+    "@graphprotocol/graph-cli": "http://github.com/graphprotocol/graph-cli#ford/add-startblock-to-contract-source",
+    "@graphprotocol/graph-ts": "^0.15.1",
     "@typescript-eslint/eslint-plugin": "^5.18.0",
     "@typescript-eslint/parser": "^5.18.0",
     "eslint": "^8.13.0",
